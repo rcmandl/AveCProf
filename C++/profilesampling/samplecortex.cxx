@@ -666,7 +666,7 @@ int main(int argc, char* argv[]) {
         bSplineInter->SetSplineOrder(bSpline);
     }
     
-    ImageType::Pointer flagVolume = NULL;
+    ImageType::Pointer flagVolume;
     
     if ( useFlagVolume ) {
         filter->SetInput(inVolume);
