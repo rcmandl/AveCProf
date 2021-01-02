@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 #
 # This program creates the surface files for the pial an dn white matter surface that serve as input for the program samplecortex.
 #
@@ -8,7 +8,7 @@
 #
 
 
-# set -x
+set -x
 NPARAM=$#
 if (( NPARAM < 1 || NPARAM > 2 ))
 then
@@ -29,6 +29,13 @@ echo
 exit 1
 fi
 
+# Although not needed here, it is good practice to always have a link to the source
+if [ ! -v AVECPROF ]
+then
+echo "You have to set the AVECPROF environment variable first"
+exit 2
+fi
+
 
 CURRENTDIR=`pwd`
 cd $1
@@ -42,9 +49,8 @@ else
 LABELPATH="../label"
 fi
 
-
 #
-#
+# temporary copy the required cortex info to this directory
 #
 
 cp ../surf/lh.pial .
@@ -56,12 +62,13 @@ cp ../surf/rh.avg_curv .
 
 # get curvature information in ascii format add to coordiates (in native coordinates)
 
-mris_convert --cras_add --to-scanner -c lh.avg_curv lh.pial lh.pial.avg_curv.asc
-mris_convert --cras_add --to-scanner -c lh.avg_curv lh.white lh.white.avg_curv.asc
-mris_convert --cras_add --to-scanner -c rh.avg_curv rh.pial rh.pial.avg_curv.asc
-mris_convert --cras_add --to-scanner -c rh.avg_curv rh.white rh.white.avg_curv.asc
+mris_convert --to-scanner -c lh.avg_curv lh.pial lh.pial.avg_curv.asc
+mris_convert --to-scanner -c lh.avg_curv lh.white lh.white.avg_curv.asc
+mris_convert --to-scanner -c rh.avg_curv rh.pial rh.pial.avg_curv.asc
+mris_convert --to-scanner -c rh.avg_curv rh.white rh.white.avg_curv.asc
 
 rm lh.pial lh.white rh.pial rh.white
+
 
 
 ##
@@ -72,25 +79,18 @@ rm lh.pial lh.white rh.pial rh.white
 # Now construct the small R script that is used to select the points (for both the pial and the wm surface
 # that are part of the particular label.
 
-##
-## NOTE THAT WE NEGATE THE X AND Y COORDINATES!! IS THIS STILL NECESSARY? (CHECK)
-##
-
 echo "# R script to select points from inner and out surface given their index in a file." > selectPoints_l.R
 echo "# Assuming that the first 2 lines of the label and surface files are removed." >> selectPoints_l.R
 echo "indices <- read.table(\"tmpLabel_l\")" >> selectPoints_l.R
 echo "pial <- read.table(\"lh.pial.avg_curv.asc\");" >> selectPoints_l.R
+echo "wm <- read.table(\"lh.white.avg_curv.asc\");" >> selectPoints_l.R
 echo "i<-indices[,1]" >> selectPoints_l.R
 echo "i=i+1; # indices start at 0 while R starts at 1" >> selectPoints_l.R
 echo "pialSelected<-pial[i,2:4]" >> selectPoints_l.R
 echo "curvatureSelected<-pial[i,5]" >> selectPoints_l.R
-echo "pialSelected[,1]<-pialSelected[,1]*-1" >> selectPoints_l.R
-echo "pialSelected[,2]<-pialSelected[,2]*-1" >> selectPoints_l.R
 echo "write.table(pialSelected, file=\"PIALOUTFILE_l\",col.names=FALSE, row.names=FALSE)"  >> selectPoints_l.R
-echo "write.table(curvatureSelected, file=\"CURVATUREOUTFILE_l\")" >> selectPoints_l.R
-echo "wmSelected<-pial[i,2:4]" >> selectPoints_l.R
-echo "wmSelected[,1]<-pialSelected[,1]*-1" >> selectPoints_l.R
-echo "wmSelected[,2]<-pialSelected[,2]*-1" >> selectPoints_l.R
+echo "write.table(curvatureSelected, file=\"CURVATUREOUTFILE_l\",col.names=FALSE, row.names=FALSE)" >> selectPoints_l.R
+echo "wmSelected<-wm[i,2:4]" >> selectPoints_l.R
 echo "write.table(wmSelected, file=\"WHITEOUTFILE_l\",col.names=FALSE, row.names=FALSE)" >> selectPoints_l.R
 
 # Now for each label file in the label directory do:
@@ -117,25 +117,18 @@ rm selectPoints_l.R
 # Now construct the small R script that is used to select the points (for both the pial and the wm surface
 # that are part of the particular label.
 
-##
-## NOTE THAT WE NEGATE THE X AND Y COORDINATES!!
-##
-
 echo "# R script to select points from inner and out surface given their index in a file." > selectPoints_r.R
 echo "# Assuming that the first 2 lines of the label and surface files are removed." >> selectPoints_r.R
 echo "indices <- read.table(\"tmpLabel_r\")" >> selectPoints_r.R
 echo "pial <- read.table(\"rh.pial.avg_curv.asc\");" >> selectPoints_r.R
+echo "wm <- read.table(\"rh.white.avg_curv.asc\");" >> selectPoints_r.R
 echo "i<-indices[,1]" >> selectPoints_r.R
 echo "i=i+1; # indices start at 0 while R starts at 1" >> selectPoints_r.R
 echo "pialSelected<-pial[i,2:4]" >> selectPoints_r.R
 echo "curvatureSelected<-pial[i,5]" >> selectPoints_r.R
-echo "pialSelected[,1]<-pialSelected[,1]*-1" >> selectPoints_r.R
-echo "pialSelected[,2]<-pialSelected[,2]*-1" >> selectPoints_r.R
 echo "write.table(pialSelected, file=\"PIALOUTFILE_r\",col.names=FALSE, row.names=FALSE)"  >> selectPoints_r.R
-echo "write.table(curvatureSelected, file=\"CURVATUREOUTFILE_r\")" >> selectPoints_r.R
-echo "wmSelected<-pial[i,2:4]" >> selectPoints_r.R
-echo "wmSelected[,1]<-pialSelected[,1]*-1" >> selectPoints_r.R
-echo "wmSelected[,2]<-pialSelected[,2]*-1" >> selectPoints_r.R
+echo "write.table(curvatureSelected, file=\"CURVATUREOUTFILE_r\",col.names=FALSE, row.names=FALSE)" >> selectPoints_r.R
+echo "wmSelected<-wm[i,2:4]" >> selectPoints_r.R
 echo "write.table(wmSelected, file=\"WHITEOUTFILE_r\",col.names=FALSE, row.names=FALSE)" >> selectPoints_r.R
 
 # Now for each label file in the label directory do:

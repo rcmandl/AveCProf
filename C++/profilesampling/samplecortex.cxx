@@ -11,6 +11,11 @@
 //        Each line in output starts with segmentnr and point coordinates of surfaces, then the measurement values and ends with the relative resolution value.
 //
 //
+// Note:
+// There is something strange when reading in the nifti files. For some reason the x and y coordinates from scanner space need to be negated when calling inVolume->TransformPhysicalPointToIndex()
+// WHen comparing the directionality matrix and origin with the matrices from say fslhd, you can see that indeed the x and y are negated. (it appears not to be related to RAS vs LPS)
+// For now an option is added allowing to mirror x and y values but this need to be further clarified.
+//
 // This software is is published under the GNU General Public License version 3(www.gnu.org/licenses/gpl-3.0.en.html)
 // The author and University Medical Center Utrecht  make no representations about the
 // suitability of this software for any purpose. It is provided "as is" without express or implied warranty.
@@ -24,6 +29,7 @@
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkBSplineInterpolateImageFunction.h"
+#include "itkOrientImageFilter.h"
 #include <itkNiftiImageIO.h>
 #include <metaCommand.h>
 #include <iostream>
@@ -35,7 +41,7 @@ using inputVoxelType = float; // for now only operate on float images
 using ImageType = itk::Image<inputVoxelType, Dimension>;
 using linearInterpolatorType = itk::LinearInterpolateImageFunction<ImageType, inputVoxelType>;// Needed if we want to do linear interpolation instead of nearest neighbour
 using bSplineInterpolatorType = itk::BSplineInterpolateImageFunction<ImageType, inputVoxelType>;// Needed if we want to do bSpline interpolation instead of nearest neighbour
-
+using orientImageFilterType = itk::OrientImageFilter<ImageType, ImageType>; // to change the coordidnate system for the nifti files
 //
 // getImageIO
 //
@@ -62,7 +68,7 @@ itk::ImageIOBase::Pointer getImageIO(std::string input) {
 //
 // Perform sampling using nearest neighbour and add to the flagVolume
 
-void sampleAndWriteLineWithFlagsNN( ImageType::Pointer inVolume, ImageType::Pointer flagVolume, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr ) {
+void sampleAndWriteLineWithFlagsNN( ImageType::Pointer inVolume, ImageType::Pointer flagVolume, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr, float SCL ) {
     
     unsigned int i;
     using PointType = itk::Point<double, Dimension >;
@@ -109,7 +115,8 @@ void sampleAndWriteLineWithFlagsNN( ImageType::Pointer inVolume, ImageType::Poin
         point[1]=extWmCoordinateY;
         point[2]=extWmCoordinateZ;
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
+        
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
         
         for (i = 0; i < nrOfSteps; i++) {
             
@@ -127,7 +134,7 @@ void sampleAndWriteLineWithFlagsNN( ImageType::Pointer inVolume, ImageType::Poin
             } else {
                 std::cerr << std::endl;
                 std::cerr << std::endl;
-                std::cerr << "*** ERROR: coordinate of sample point is outside volume (should not occur!)" << std::endl;
+                std::cerr << "*** ERROR: coordinate of sample point is outside volume; should not occur! (perhaps -negateXY option is needed?)" << std::endl;
                 std::cerr << std::endl;
                 exit(EXIT_FAILURE);
             }
@@ -146,7 +153,7 @@ void sampleAndWriteLineWithFlagsNN( ImageType::Pointer inVolume, ImageType::Poin
 //
 // Perform sampling using nearest neighbour
 
-void sampleAndWriteLineNN( ImageType::Pointer inVolume, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr ) {
+void sampleAndWriteLineNN( ImageType::Pointer inVolume, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr, float SCL ) {
     
     unsigned int i;
     using PointType = itk::Point<double, Dimension >;
@@ -193,7 +200,7 @@ void sampleAndWriteLineNN( ImageType::Pointer inVolume, float pialCoordinateX, f
         point[1]=extWmCoordinateY;
         point[2]=extWmCoordinateZ;
     
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
         
         for (i = 0; i < nrOfSteps; i++) {
             
@@ -225,7 +232,7 @@ void sampleAndWriteLineNN( ImageType::Pointer inVolume, float pialCoordinateX, f
 //
 // Perform sampling using linear interpolation and add to flagVolume
 
-void sampleAndWriteLineWithFlagsLI( ImageType::Pointer inVolume, linearInterpolatorType::Pointer inter, ImageType::Pointer flagVolume, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr ) {
+void sampleAndWriteLineWithFlagsLI( ImageType::Pointer inVolume, linearInterpolatorType::Pointer inter, ImageType::Pointer flagVolume, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr, float SCL ) {
     
     unsigned int i;
     using PointType = itk::Point<double, Dimension >;
@@ -272,12 +279,12 @@ void sampleAndWriteLineWithFlagsLI( ImageType::Pointer inVolume, linearInterpola
         point[1]=extWmCoordinateY;
         point[2]=extWmCoordinateZ;
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
         
         for (i = 0; i < nrOfSteps; i++) {
             
             const bool isInside = inVolume->TransformPhysicalPointToIndex(point,pixelIndex); // test if coordinate falls within image
-            
+
             if ( isInside ) {
                 pixelValue = inter->Evaluate(point); // Now use linear interpolation:
                 std::cout << pixelValue << " ";
@@ -312,7 +319,7 @@ void sampleAndWriteLineWithFlagsLI( ImageType::Pointer inVolume, linearInterpola
 // Perform sampling using linear interpolation
 //
 
-void sampleAndWriteLineLI( ImageType::Pointer inVolume, linearInterpolatorType::Pointer inter, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr ) {
+void sampleAndWriteLineLI( ImageType::Pointer inVolume, linearInterpolatorType::Pointer inter, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr, float SCL  ) {
     
     unsigned int i;
     using PointType = itk::Point<double, Dimension >;
@@ -360,7 +367,7 @@ void sampleAndWriteLineLI( ImageType::Pointer inVolume, linearInterpolatorType::
         point[2]=extWmCoordinateZ;
         
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
         
         
         for (i = 0; i < nrOfSteps; i++) {
@@ -392,7 +399,7 @@ void sampleAndWriteLineLI( ImageType::Pointer inVolume, linearInterpolatorType::
 //
 // Perform sampling using linear interpolation and add to flagVolume
 
-void sampleAndWriteLineWithFlagsBS( ImageType::Pointer inVolume, bSplineInterpolatorType::Pointer inter, ImageType::Pointer flagVolume, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr ) {
+void sampleAndWriteLineWithFlagsBS( ImageType::Pointer inVolume, bSplineInterpolatorType::Pointer inter, ImageType::Pointer flagVolume, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr, float SCL ) {
     
     unsigned int i;
     using PointType = itk::Point<double, Dimension >;
@@ -439,7 +446,7 @@ void sampleAndWriteLineWithFlagsBS( ImageType::Pointer inVolume, bSplineInterpol
         point[1]=extWmCoordinateY;
         point[2]=extWmCoordinateZ;
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
         
         for (i = 0; i < nrOfSteps; i++) {
             
@@ -479,7 +486,7 @@ void sampleAndWriteLineWithFlagsBS( ImageType::Pointer inVolume, bSplineInterpol
 // Perform sampling using linear interpolation
 //
 
-void sampleAndWriteLineBS( ImageType::Pointer inVolume, bSplineInterpolatorType::Pointer inter, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr ) {
+void sampleAndWriteLineBS( ImageType::Pointer inVolume, bSplineInterpolatorType::Pointer inter, float pialCoordinateX, float pialCoordinateY, float pialCoordinateZ, float wmCoordinateX, float wmCoordinateY, float wmCoordinateZ, unsigned int nrOfSteps, float extentFactor, long lineNr, float SCL ) {
     
     unsigned int i;
     using PointType = itk::Point<double, Dimension >;
@@ -527,7 +534,7 @@ void sampleAndWriteLineBS( ImageType::Pointer inVolume, bSplineInterpolatorType:
         point[2]=extWmCoordinateZ;
         
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
         
         
         for (i = 0; i < nrOfSteps; i++) {
@@ -570,6 +577,7 @@ int main(int argc, char* argv[]) {
     bool useFlagVolume = false;
     bool linearInterpolation = false;
     bool bSplineInterpolation = false;
+    bool negateXY = false;
     int bSpline = 2;
     
     command.AddField("pialCoordinates", "name of file containing pial coordinates", MetaCommand::STRING,true);
@@ -593,7 +601,15 @@ int main(int argc, char* argv[]) {
     
     command.SetOption("flagVolume","f",false,"write flagvolume for debugging purposes");
     command.SetOptionLongTag("flagVolume","flagVolume");
-
+    command.AddOptionField("flagVolume","flagFile", MetaCommand::STRING,true,"");
+    
+    command.SetOption("scalarAddOn","a",false, "optional file with scalar info (e.g. curvature) to be added to the measurements");
+    command.SetOptionLongTag("scalarAddOn", "scalarAddOn");
+    command.AddOptionField("scalarAddOn","addOn", MetaCommand::STRING,true,"");
+    
+    command.SetOption("negateXY","p",false, "For some reason XY coordinates (e.g. from Freesurfer) need to be multiplied with -1 (appears to be a discrepancy between q/s-form in fileheader and info stored in ITK volume) ");
+    command.SetOptionLongTag("negateXY","negateXY");
+    
     if (!command.Parse(argc, argv)) {
         std::cerr << std::endl;
         std::cerr << std::endl;
@@ -611,9 +627,12 @@ int main(int argc, char* argv[]) {
     
     int nrOfSteps                       = command.GetValueAsInt("nrOfSteps","nos");
     float extentFactor                  = command.GetValueAsFloat("extentFactor","extent");
-    useFlagVolume                       = command.GetValueAsBool("flagVolume","flagVolume");
     linearInterpolation                 = command.GetValueAsBool("linearInterpolation","linearInterpolation");
     bSpline                             = command.GetValueAsInt("bSplineInterpolation","bspline");
+    negateXY                            = command.GetValueAsBool("negateXY","negateXY");
+    
+    std::string scalarAddOnFileName     = command.GetValueAsString("scalarAddOn", "addOn");
+    std::string flagFileName            = command.GetValueAsString("flagVolume","flagFile");
     
     // test if parameter was set
     if (bSpline != -100 ) bSplineInterpolation = true;
@@ -626,7 +645,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     
-    if (bSpline < 0 || bSpline > 5) {
+    if (bSplineInterpolation && (bSpline < 0 || bSpline > 5) ) {
         std::cerr << std::endl;
         std::cerr << "ERROR: bSpline value must be in range 0 - 5" << std::endl;
         std::cerr << std::endl;
@@ -634,24 +653,28 @@ int main(int argc, char* argv[]) {
 
     }
     
+    if (!flagFileName.empty()) useFlagVolume = true;
+    
     // EOF command parsing
     
     itk::ImageIOBase::Pointer volumeIO = getImageIO(dataToSampleFileName);
     
     using inVolReader = itk::ImageFileReader<ImageType>;
-    FILE* pialCoordinates;
-    FILE* wmCoordinates;
+    FILE* pialCoordinates = NULL;
+    FILE* wmCoordinates = NULL;
+    FILE* scalarAddOn = NULL;
     
     inVolReader::Pointer in_volReader = inVolReader::New();
     in_volReader->SetFileName(volumeIO->GetFileName());
     in_volReader->Update();
-    
+   
     // To create a flagVolume initiated with zeroes we (mis)use a threshold filter.
     using FilterType = itk::BinaryThresholdImageFilter< ImageType, ImageType >;
     FilterType::Pointer filter = FilterType::New();
     
     ImageType::Pointer inVolume;
     inVolume = in_volReader->GetOutput();
+    
     
     // Needed if we want to do linear interpolation instead of nearest neighbour
     linearInterpolatorType::Pointer linearInter = linearInterpolatorType::New();
@@ -667,6 +690,8 @@ int main(int argc, char* argv[]) {
     }
     
     ImageType::Pointer flagVolume;
+    
+    // Note that the flag volume has the coordinate LPS coordinate system if the flag is set
     
     if ( useFlagVolume ) {
         filter->SetInput(inVolume);
@@ -684,6 +709,10 @@ int main(int argc, char* argv[]) {
     pialCoordinates=std::fopen(pialCoordinatesFileName.c_str(), "r");
     wmCoordinates=std::fopen(wmCoordinatesFileName.c_str(), "r");
     
+    if ( !scalarAddOnFileName.empty() ) {
+        scalarAddOn=std::fopen(scalarAddOnFileName.c_str(), "r");
+    }
+    
     if (std::ferror(pialCoordinates)) {
         std::cout << "file: " << pialCoordinatesFileName << " could not be opened for reading\n\n" << std::endl << std::endl;
         return EXIT_FAILURE;
@@ -694,11 +723,12 @@ int main(int argc, char* argv[]) {
     }
 
     
-    unsigned int i,j;
+    unsigned int i,j,k=1;
     
     float n1,n2,n3;
     float pialCoordinateX, pialCoordinateY, pialCoordinateZ;
     float wmCoordinateX, wmCoordinateY, wmCoordinateZ;
+    float SCL;
 
     long lineNr=1;
     
@@ -709,9 +739,27 @@ int main(int argc, char* argv[]) {
         
         j=fscanf(wmCoordinates, "%f %f %f\n", &n1, &n2, &n3);
         wmCoordinateX = n1; wmCoordinateY = n2; wmCoordinateZ = n3;
-
+        
+        if (negateXY) {
+            pialCoordinateX = pialCoordinateX * -1;
+            pialCoordinateY = pialCoordinateY * -1;
+            wmCoordinateX = wmCoordinateX * -1;
+            wmCoordinateY = wmCoordinateY * -1;
+        }
+        
+        
         if (j<3 && i!=j) {
             std::cout << "ERROR!: invalid coordinate (missing value, bailing out)" << std::endl << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        // do we have scalarAddOns; if so read
+        if (scalarAddOn != NULL) {
+            k=fscanf(scalarAddOn, "%f\n", &SCL);
+        } else SCL = 0;
+        
+        if (k!=1) {
+            std::cout << "ERROR!: invalid scalarAddOn (k = " << k << ") " << std::endl << std::endl;
             return EXIT_FAILURE;
         }
 
@@ -722,27 +770,28 @@ int main(int argc, char* argv[]) {
         
         if ( linearInterpolation ) {
             if (useFlagVolume) {
-                sampleAndWriteLineWithFlagsLI(inVolume, linearInter, flagVolume, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr );
+                
+                sampleAndWriteLineWithFlagsLI(inVolume, linearInter, flagVolume, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr, SCL);
             } else {
-                sampleAndWriteLineLI(inVolume, linearInter, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr );
+                sampleAndWriteLineLI(inVolume, linearInter, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr, SCL);
             }
         } else if ( bSplineInterpolation ) {
             if (useFlagVolume) {
-                sampleAndWriteLineWithFlagsBS(inVolume, bSplineInter, flagVolume, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr );
+                sampleAndWriteLineWithFlagsBS(inVolume, bSplineInter, flagVolume, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr, SCL);
             } else {
-                sampleAndWriteLineBS(inVolume, bSplineInter, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr );
+                sampleAndWriteLineBS(inVolume, bSplineInter, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr, SCL);
             }
         } else {
             if (useFlagVolume) {
-                sampleAndWriteLineWithFlagsNN(inVolume, flagVolume, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr );
+                sampleAndWriteLineWithFlagsNN(inVolume, flagVolume, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr, SCL );
             } else {
-                sampleAndWriteLineNN(inVolume, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr );
+                sampleAndWriteLineNN(inVolume, pialCoordinateX, pialCoordinateY, pialCoordinateZ, wmCoordinateX, wmCoordinateY, wmCoordinateZ, nrOfSteps, extentFactor, lineNr, SCL );
             }
         }
         lineNr++;
     }
     
-     std::string outName = "flags_" + dataToSampleFileName;
+     std::string outName = flagFileName;
     
     // Write out the flag volume if any
     if (useFlagVolume) {
