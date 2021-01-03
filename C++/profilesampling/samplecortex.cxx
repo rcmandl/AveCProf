@@ -116,7 +116,7 @@ void sampleAndWriteLineWithFlagsNN( ImageType::Pointer inVolume, ImageType::Poin
         point[2]=extWmCoordinateZ;
         
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
         
         for (i = 0; i < nrOfSteps; i++) {
             
@@ -143,7 +143,7 @@ void sampleAndWriteLineWithFlagsNN( ImageType::Pointer inVolume, ImageType::Poin
             point[1]+=yStep;
             point[2]+=zStep;
         }
-        std::cout << length << std::endl;;
+        std::cout << length << " " << SCL << std::endl;
     }
 }
 
@@ -200,7 +200,7 @@ void sampleAndWriteLineNN( ImageType::Pointer inVolume, float pialCoordinateX, f
         point[1]=extWmCoordinateY;
         point[2]=extWmCoordinateZ;
     
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
         
         for (i = 0; i < nrOfSteps; i++) {
             
@@ -221,7 +221,7 @@ void sampleAndWriteLineNN( ImageType::Pointer inVolume, float pialCoordinateX, f
             point[1]+=yStep;
             point[2]+=zStep;
         }
-        std::cout << length << std::endl;;
+        std::cout << length << " " << SCL << std::endl;
     }
 }
 
@@ -279,7 +279,7 @@ void sampleAndWriteLineWithFlagsLI( ImageType::Pointer inVolume, linearInterpola
         point[1]=extWmCoordinateY;
         point[2]=extWmCoordinateZ;
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
         
         for (i = 0; i < nrOfSteps; i++) {
             
@@ -306,7 +306,7 @@ void sampleAndWriteLineWithFlagsLI( ImageType::Pointer inVolume, linearInterpola
             point[1]+=yStep;
             point[2]+=zStep;
         }
-        std::cout << length << std::endl;;
+        std::cout << length << " " << SCL << std::endl;
     }
 }
 
@@ -367,7 +367,7 @@ void sampleAndWriteLineLI( ImageType::Pointer inVolume, linearInterpolatorType::
         point[2]=extWmCoordinateZ;
         
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
         
         
         for (i = 0; i < nrOfSteps; i++) {
@@ -389,7 +389,7 @@ void sampleAndWriteLineLI( ImageType::Pointer inVolume, linearInterpolatorType::
             point[1]+=yStep;
             point[2]+=zStep;
         }
-        std::cout << length << std::endl;;
+        std::cout << length << " " << SCL << std::endl;
     }
 }
 
@@ -446,7 +446,7 @@ void sampleAndWriteLineWithFlagsBS( ImageType::Pointer inVolume, bSplineInterpol
         point[1]=extWmCoordinateY;
         point[2]=extWmCoordinateZ;
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
         
         for (i = 0; i < nrOfSteps; i++) {
             
@@ -473,7 +473,7 @@ void sampleAndWriteLineWithFlagsBS( ImageType::Pointer inVolume, bSplineInterpol
             point[1]+=yStep;
             point[2]+=zStep;
         }
-        std::cout << length << std::endl;;
+        std::cout << length << " " << SCL << std::endl;
     }
 }
 
@@ -534,7 +534,7 @@ void sampleAndWriteLineBS( ImageType::Pointer inVolume, bSplineInterpolatorType:
         point[2]=extWmCoordinateZ;
         
         
-        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " " << SCL << " ";
+        std::cout << lineNr << " " << extPialCoordinateX << " " << extPialCoordinateY << " " << extPialCoordinateZ << " " << extWmCoordinateX << " " << extWmCoordinateY << " " << extWmCoordinateZ << " ";
         
         
         for (i = 0; i < nrOfSteps; i++) {
@@ -556,7 +556,7 @@ void sampleAndWriteLineBS( ImageType::Pointer inVolume, bSplineInterpolatorType:
             point[1]+=yStep;
             point[2]+=zStep;
         }
-        std::cout << length << std::endl;;
+        std::cout << length << " " << SCL << std::endl;
     }
 }
 
@@ -580,8 +580,8 @@ int main(int argc, char* argv[]) {
     bool negateXY = false;
     int bSpline = 2;
     
-    command.AddField("pialCoordinates", "name of file containing pial coordinates", MetaCommand::STRING,true);
     command.AddField("wmCoordinates", "name of file containing corresponding white matter boundary coordinates", MetaCommand::STRING,true);
+    command.AddField("pialCoordinates", "name of file containing pial coordinates", MetaCommand::STRING,true);
     command.AddField("dataToSample", "name of nifti file with data to sample", MetaCommand::STRING,true);
     
     command.SetOption("nrOfSteps","s",false, "number of steps to sample a profile");
@@ -613,10 +613,12 @@ int main(int argc, char* argv[]) {
     if (!command.Parse(argc, argv)) {
         std::cerr << std::endl;
         std::cerr << std::endl;
-        std::cerr << "With this program you sample cortical profiles based on inner and outer cortical coordinates (two freesufer output files) and a corresponding MRI scan." << std::endl;
+        std::cerr << "With this program you sample cortical profiles based on inner and outer cortical coordinates (two freesufer output files) and a (MRI) scan to be sampled." << std::endl;
+        std::cerr << std::endl;
+        std::cerr << "format output: | profile nr | XYZ inner | XYZ outer | ... nrOfSteps sample points ... | thickness (Euclidian) | [ scalar addOn ] |" << std::endl;
         std::cerr << std::endl;
         std::cerr << "USAGE:" << std::endl;
-        std::cerr << "samplecortex <options> <inner-coordinates>.txt <outer-coordinates>.txt <inputVolume>.nii" << std::endl;
+        std::cerr << "samplecortex <options> <inner-coordinates>.txt <outer-coordinates>.txt <inputVolume>.nii" << std::endl << std::endl << std::endl;
         return EXIT_FAILURE;
     }
     
@@ -802,7 +804,7 @@ int main(int argc, char* argv[]) {
             writer->SetInput(flagVolume);
             writer->Update();
         } catch ( itk::ExceptionObject & e ) {
-            std::cerr << "Unexpected exception caught when writing : " << outName << std::endl;
+            std::cerr << "Unexpected exception caught when writing. Note, requires valid file extention (e.g. .nii): " << outName << std::endl;
             return EXIT_FAILURE;
         }
     }

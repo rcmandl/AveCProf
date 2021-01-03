@@ -65,8 +65,11 @@ for x in `ls *.pial`
   # Note the negateXY option; for some reason there appears to be a discrepancy between the world-to-scan transformation in the nifti header file and the internal ITK representation
   # (does not look like  a RAS <-> LPS issue). For now it is 'solved' by adding an option to correct for this (multiplying X and Y coordinates with -1).
   # With the scalarAddOn option we include curvature information into the file (thickness can be computed by the euclidian distance between a pial point and its corresponding wm point). 
-  ${SAMPLECORTEX} --linearInterpolation --negateXY --extentFactor 3 --nrOfSteps 300 --scalarAddOn ${BASE}.curvature --flagVolume ${BASE}.pial ${BASE}.white ${CONTRAST}  > ./samples/${BASE}_${BC}.layer
-
+  ${SAMPLECORTEX} --linearInterpolation --negateXY --extentFactor 3 --nrOfSteps 300 --scalarAddOn ${BASE}.curvature --flagVolume ${BASE}_flag.nii ${BASE}.white ${BASE}.pial ${CONTRAST}  > ./samples/${BASE}_${BC}.layer
+ 
+  # we just create flag volumes to be sure you can overlay them on the contrast file to check if the sampling is valid 
+  gzip ${BASE}_flag.nii
+  
   split -a 5 -l ${PATCHSIZE} ./samples/${BASE}_${BC}.layer ./samples/${BASE}_${BC}_xxxxx_
 
 
@@ -78,5 +81,7 @@ for x in `ls *.pial`
     mv $y ${NEWNAME}
   done
 done
+
+gzip ./samples/*.layer
 
 cd ${CURRENTDIR}
