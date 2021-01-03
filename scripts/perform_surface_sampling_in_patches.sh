@@ -51,7 +51,7 @@ fi
 cd layers
 
 SAMPLECORTEX=${AVECPROF}/C++/profilesampling/samplecortex
-LAYER22COLUMNS=${AVECPROF}scripts/layer_to_2_columns.awk
+LAYER22COLUMNS=${AVECPROF}/scripts/layer_to_2_columns.awk
 
 mkdir samples
 
@@ -62,13 +62,13 @@ for x in `ls *.pial`
   do
   BASE=`basename $x .pial`
 
-  ${SAMPLECORTEX} --linearInterpolation --extentFactor 3 --nrOfSteps 300 --scalarAddOn ${BASE}.curvature --flagVolume ${BASE}.pial ${BASE}.white ${CONTRAST}  > ./samples/${BASE}_${BC}.layer
+  # Note the negateXY option; for some reason there appears to be a discrepancy between the world-to-scan transformation in the nifti header file and the internal ITK representation
+  # (does not look like  a RAS <-> LPS issue). For now it is 'solved' by adding an option to correct for this (multiplying X and Y coordinates with -1).
+  # With the scalarAddOn option we include curvature information into the file (thickness can be computed by the euclidian distance between a pial point and its corresponding wm point). 
+  ${SAMPLECORTEX} --linearInterpolation --negateXY --extentFactor 3 --nrOfSteps 300 --scalarAddOn ${BASE}.curvature --flagVolume ${BASE}.pial ${BASE}.white ${CONTRAST}  > ./samples/${BASE}_${BC}.layer
 
   split -a 5 -l ${PATCHSIZE} ./samples/${BASE}_${BC}.layer ./samples/${BASE}_${BC}_xxxxx_
 
-  #
-  # Now, what is done below is only of interest if you would use the forKriger option.
-  #
 
   NROFPATCHES=0
   for y in `ls ./samples/${BASE}_${BC}_xxxxx_*`
