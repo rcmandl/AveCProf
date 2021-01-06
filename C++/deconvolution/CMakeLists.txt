@@ -7,7 +7,7 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-PROJECT(itkLandweberDeconvolution)
+PROJECT(itkDeconvolution)
 OPTION(DEBUG ON)
 SET(ITK_DIR /Users/renemandl/Software/ITK/ITK)
 FIND_PACKAGE(ITK)
@@ -17,6 +17,6 @@ ELSE(ITK_FOUND)
    MESSAGE(FATAL_ERROR
 	   "Cannot build withoud ITK, please set ITK_DIR.")
 ENDIF(ITK_FOUND)
-ADD_EXECUTABLE(itkLandweberDeconvolution itkLandweberDeconvolution.cxx)
+ADD_EXECUTABLE(itkDeconvolution itkDeconvolution.cxx)
 
-TARGET_LINK_LIBRARIES(itkLandweberDeconvolution ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(itkDeconvolution ${ITK_LIBRARIES})
