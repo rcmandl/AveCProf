@@ -187,6 +187,22 @@ int main(int argc, char* argv[])
     
     resampler->SetInput(in_volReader->GetOutput());
     
+    
+    
+    if ( 0 == nrOfIterations ) { // special case: do not deconvolute, just resample
+        try {
+            WriterType::Pointer writer = WriterType::New();
+            writer->SetFileName(outFileName);
+            writer->SetInput(resampler->GetOutput());
+            writer->Update();
+        } catch ( itk::ExceptionObject & e ) {
+            std::cerr << "Unexpected exception caught when writing resampled image: " << std::endl;
+            return EXIT_FAILURE;
+        }
+        
+        EXIT_SUCCESS;
+    }
+    
     // the deblurring kernel
     inFilterReader::Pointer in_filterReader = inFilterReader::New();
     in_filterReader->SetFileName(filterIO->GetFileName());
