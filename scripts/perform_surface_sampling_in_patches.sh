@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/bin/zsh
 #
 # This script computes the cortex samples from the measurements computed in an earlier stage with create_subject_surface_measurements
 # Rene Mandl
 #
 #
 
-# set -x
+ set -x
 
 if [ $# -ne 3 ]
 then
@@ -30,7 +30,14 @@ fi
 
 CURRENTDIR=`pwd`
 
-CONTRAST=`readlink -f $2`
+if [ "${AVECPROF_OS}" = "DARWIN" ]
+then
+CONTRAST=$2
+else
+CONTRAST=`readlink -l $2`
+fi
+
+
 PATCHSIZE=$3
 
 if [ ! -e ${CONTRAST} ]
@@ -58,6 +65,11 @@ mkdir samples
 BC=`basename $CONTRAST .gz`
 BC=`basename $BC .nii`
 
+# Test if the environmnent variables are set; otherwise use a default value
+
+AVECPROF_SAMPLECORTEX_EXTENTFACTOR="${AVECPROF_SAMPLECORTEX_EXTENTFACTOR:-3}"
+AVECPROF_SAMPLECORTEX_NROFSTEPS="${AVECPROF_SAMPLECORTEX_NROFSTEPS:-300}"
+
 for x in `ls *.pial`
   do
   BASE=`basename $x .pial`
@@ -65,13 +77,15 @@ for x in `ls *.pial`
   # Note the negateXY option; for some reason there appears to be a discrepancy between the world-to-scan transformation in the nifti header file and the internal ITK representation
   # (does not look like  a RAS <-> LPS issue). For now it is 'solved' by adding an option to correct for this (multiplying X and Y coordinates with -1).
   # With the scalarAddOn option we include curvature information into the file (thickness can be computed by the euclidian distance between a pial point and its corresponding wm point). 
-  ${SAMPLECORTEX} --linearInterpolation --negateXY --extentFactor 3 --nrOfSteps 300 --scalarAddOn ${BASE}.curvature --flagVolume ${BASE}_flag.nii ${BASE}.white ${BASE}.pial ${CONTRAST}  > ./samples/${BASE}_${BC}.layer
+
+
+  ${SAMPLECORTEX} --linearInterpolation --negateXY --extentFactor ${AVECPROF_SAMPLECORTEX_EXTENTFACTOR} --nrOfSteps ${AVECPROF_SAMPLECORTEX_NROFSTEPS} --scalarAddOn ${BASE}.curvature --flagVolume ${BASE}_flag.nii ${BASE}.white ${BASE}.pial ${CONTRAST}  > ./samples/${BASE}_${BC}.layer
  
   # we just create flag volumes to be sure you can overlay them on the contrast file to check if the sampling is valid 
   gzip ${BASE}_flag.nii
-  
+  mv ${BASE}_flag.nii.gz ./samples 
+ 
   split -a 5 -l ${PATCHSIZE} ./samples/${BASE}_${BC}.layer ./samples/${BASE}_${BC}_xxxxx_
-
 
   NROFPATCHES=0
   for y in `ls ./samples/${BASE}_${BC}_xxxxx_*`

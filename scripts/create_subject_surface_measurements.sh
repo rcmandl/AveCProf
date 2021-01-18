@@ -8,8 +8,10 @@
 #
 
 
-set -x
+#set -x
+
 NPARAM=$#
+
 if (( NPARAM < 1 || NPARAM > 2 ))
 then
 echo
@@ -25,14 +27,32 @@ echo "If no path to label files is provided then te default label files are used
 echo "You can create label files from annotation files using the program mri_annotation2label (part of freesurfer)"
 echo "In this way you can create labels for complete atlases. Note that you have to create these labels before you call this script."
 echo
+echo "Requires that both Rscript (part of R) and Freesurfer are installed." 
+echo
 echo
 exit 1
 fi
 
-# Although not needed here, it is good practice to always have a link to the source
+
+# Check if we can find the required software
+
 if [ ! -v AVECPROF ]
 then
 echo "You have to set the AVECPROF environment variable first"
+exit 2
+fi
+
+if [ ! -v FREESURFER_HOME ]
+then
+echo "We make use of various Freesurfer commands, so please install Freesurfer first (environment variable FREESURFER_HOME not set)"
+exit 2
+fi
+
+# check if Rscript is installed.
+
+if ! command -v Rscript > /dev/null 2>&1
+then
+echo "Cannot find Rscript, please install that program first."
 exit 2
 fi
 
@@ -108,6 +128,8 @@ do
 done
 
 rm selectPoints_l.R
+
+
 
 ##
 ## for the right hemisphere
