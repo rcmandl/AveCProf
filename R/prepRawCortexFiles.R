@@ -1,18 +1,11 @@
-############################
+#
 # prepRawCortexFiles.R
 #
-# This function reads in a .layer file generated using samplecortex, removes incomplete profiles and standardizes variance.
+# This function reads in a layer file (.layer extension) generated using samplecortex, removes incomplete profiles and standardizes variance.
+# The result is an .RDAT file
+#
 # René Mandl V 0.8
 #
-# NOT TESTED YET
-#
-############################
-
-#################
-### doPrepCortex
-################
-
-# This function reads in the profile data for specific contrast for a single layer from a single subject.
 
 doPrepCortex<-function(subject, studyDir, hemisphere, contrast, area) {
 	require(kernlab)
@@ -26,26 +19,25 @@ doPrepCortex<-function(subject, studyDir, hemisphere, contrast, area) {
 
 	Name=dir(pattern=pat)
 
-	#
 	# Because we are working with an extension of the cortex in both directions
-    # it may well be that we are sometimes sample outside the volume.
+  # it may well be that we are sometimes sample outside the volume.
 	# these values are marked as a '*'
 	# First we have to remove them and replace them by NA
 
-	M=as.matrix(read.table(Name, na.strings=c("*")))
+	M_full=as.matrix(read.table(Name, na.strings=c("*")))
 		   		   
-	 	   
 	#	
-	# you can skip the first 8 columns and the last one	(e.g. start-stop coordinates nr of points)
+	# you can skip the first 7 columns and the last 2 columns	as they contain nrOfPoints (1), start-stop XYZ-coordinates (6), 
+	# thickness (1) and curvature(1).
 	# 
 	   
-	nCols=ncol(M)
-	nRows=nrow(M)
+	nCols=ncol(M_full)
+	nRows=nrow(M_full)
 	   
-	thickness=sqrt( (M[,2] - M[,5])^2 + (M[,3]- M[,6]) ^2 + (M[,4] -M[,7]) ^2 )
-	curvature=M[,8]
+	thickness=M_full[,(nCols - 1)]
+	curvature=M_full[,nCols]
 
-	M=M[,9:(nCols-1)]
+	M=M_full[,8:(nCols-2)]
 	   
     # now replace all '0' by NA 
 	

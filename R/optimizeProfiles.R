@@ -142,7 +142,7 @@ result
         	endlocation<-length(theProfiles[i,])
         	result <- approx(new.times, theProfiles[i,], 1:profileLength, yleft=theProfiles[i,1], yright=theProfiles[i,endlocation])
         	optimizedProfiles[i,]<-result$y
-        	warpCoefs[i,]<-stptwResult$warp.coef
+        	warpCoefs[i,(1:ncol(stptwResult$warp.coef))]<-stptwResult$warp.coef
     	}
     
     	# commented out 0 substition, now missing values stay NA
@@ -192,7 +192,7 @@ result
         	  endlocation<-length(theProfiles[i,])
         	  result <- approx(new.times, theProfiles[i,], 1:profileLength, yleft=theProfiles[i,1], yright=theProfiles[i,endlocation])
         	  optimizedProfiles[i,]<-result$y  
-          	warpCoefs[i,]<-Result$warp.coef      	
+          	warpCoefs[i,1:(ncol(Result$warp.coef))]<-Result$warp.coef      	
     	    }
     
     	  # commented out 0 substition, now missing values stay NA
@@ -211,7 +211,7 @@ result
     	  endlocation<-length(theProfiles[i,])
     	  result <- approx(new.times, theProfiles[i,], 1:profileLength, yleft=theProfiles[i,1], yright=theProfiles[i,endlocation])
     	  optimizedProfiles[i,]<-result$y  
-    	  warpCoefs[i,]<-Result$warp.coef
+    	  warpCoefs[i,1:(ncol(Result$warp.coef))]<-Result$warp.coef
     	  # apply warping to second set as well
     	  #result <- approx(new.times, secondSetProfiles[i,],1:profileLength)
     	  endlocation<-length(theProfiles[i,])

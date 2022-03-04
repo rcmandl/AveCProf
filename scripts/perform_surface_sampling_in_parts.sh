@@ -1,17 +1,16 @@
 #!/bin/zsh
 #
 # This script computes the cortex samples from the measurements computed in an earlier stage with create_subject_surface_measurements
-# Rene Mandl
-#
+# Rene Mandl Version 1.0
 #
 
- set -x
+# set -x
 
 if [ $# -ne 3 ]
 then
 echo "wrong number of parameters"
 echo ""
-echo "usage: perform_surface_sampling_in_patches <subject's freesurfer directory> <contrast.nii> <patchsize>"
+echo "usage: perform_surface_sampling_in_parts <subject's freesurfer directory> <contrast.nii> <partssize>"
 echo ""
 echo "Computes ascii files of cortical layer measurements that can be analysed with R"
 echo "We also include curvature information (avg curvature) which is stored in the column after the second coordinate triplet."
@@ -22,7 +21,7 @@ echo ""
 exit 1
 fi
 
-if [ ! -v AVECPROF ]
+if [ -z $AVECPROF ]
 then
 echo "You have to set the AVECPROF environment variable first"
 exit 2
@@ -38,7 +37,7 @@ CONTRAST=`readlink -l $2`
 fi
 
 
-PATCHSIZE=$3
+PARTSIZE=$3
 
 if [ ! -e ${CONTRAST} ]
 then
@@ -56,10 +55,6 @@ exit 4
 fi
 
 cd layers
-
-SAMPLECORTEX=${AVECPROF}/C++/profilesampling/samplecortex
-LAYER22COLUMNS=${AVECPROF}/scripts/layer_to_2_columns.awk
-
 mkdir samples
 
 BC=`basename $CONTRAST .gz`
@@ -79,19 +74,19 @@ for x in `ls *.pial`
   # With the scalarAddOn option we include curvature information into the file (thickness can be computed by the euclidian distance between a pial point and its corresponding wm point). 
 
 
-  ${SAMPLECORTEX} --linearInterpolation --negateXY --extentFactor ${AVECPROF_SAMPLECORTEX_EXTENTFACTOR} --nrOfSteps ${AVECPROF_SAMPLECORTEX_NROFSTEPS} --scalarAddOn ${BASE}.curvature --flagVolume ${BASE}_flag.nii ${BASE}.white ${BASE}.pial ${CONTRAST}  > ./samples/${BASE}_${BC}.layer
+  ${AVECPROF_BIN_SAMPLECORTEX} --linearInterpolation --negateXY --extentFactor ${AVECPROF_SAMPLECORTEX_EXTENTFACTOR} --nrOfSteps ${AVECPROF_SAMPLECORTEX_NROFSTEPS} --scalarAddOn ${BASE}.curvature --flagVolume ${BASE}_flag.nii ${BASE}.white ${BASE}.pial ${CONTRAST}  > ./samples/${BASE}_${BC}.layer
  
   # we just create flag volumes to be sure you can overlay them on the contrast file to check if the sampling is valid 
   gzip ${BASE}_flag.nii
   mv ${BASE}_flag.nii.gz ./samples 
  
-  split -a 5 -l ${PATCHSIZE} ./samples/${BASE}_${BC}.layer ./samples/${BASE}_${BC}_xxxxx_
+  split -a 5 -l ${PARTSIZE} ./samples/${BASE}_${BC}.layer ./samples/${BASE}_${BC}_xxxxx_
 
-  NROFPATCHES=0
+  NROFPARTS=0
   for y in `ls ./samples/${BASE}_${BC}_xxxxx_*`
     do
-    ((NROFPATCHES++))
-    NEWNAME=`printf "./samples/%s_%s_%05d.layer" ${BASE} ${BC} ${NROFPATCHES}`
+    ((NROFPARTS++))
+    NEWNAME=`printf "./samples/%s_%s_%05d.layer" ${BASE} ${BC} ${NROFPARTS}`
     mv $y ${NEWNAME}
   done
 done
