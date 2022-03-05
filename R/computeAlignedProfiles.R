@@ -1,7 +1,7 @@
 #
-# computeAverageProfile
+# computeAlignedProfiles
 #
-# This function computes the average profile for one region 
+# This function computes the aligned profiles for one region.Simply averaging these results in the required Average profile. 
 # There are a number of optional parameters (e.g. wmBoundary). 
 # If not specified the information is collected from the info set in set_AveCProf_env.sh
 #
@@ -11,7 +11,7 @@
 # Rene Mandl Version 0.8
 #
 
-computeAverageProfile<-function(inFileName, outFileName, wmBoundary=NULL, pialBoundary=NULL, offset=NULL, flatCurveThreshold=NULL, flatThickThreshold=NULL ) {
+computeAlignedProfiles<-function(inFileName, outFileName, wmBoundary=NULL, pialBoundary=NULL, offset=NULL, flatCurveThreshold=NULL, flatThickThreshold=NULL ) {
   
   OPTIMIZEPROFILES=Sys.getenv("AVECPROF_R_OPTIMIZEPROFILES")
   COMPUTEHISTBOUNDARIES=Sys.getenv("AVECPROF_R_COMPUTEHISTBOUNDARIES")
