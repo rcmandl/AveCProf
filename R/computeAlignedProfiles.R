@@ -22,23 +22,23 @@ computeAlignedProfiles<-function(inFileName, outFileName, wmBoundary=NULL, pialB
   source(COMPUTEHISTBOUNDARIES)
   
   if (is.null(wmBoundary)) {
-    wmBoundary=Sys.getenv("AVECPROF_WM_BOUNDARY")
+    wmBoundary=as.numeric(Sys.getenv("AVECPROF_WM_BOUNDARY"))
   }
   
   if (is.null(pialBoundary)) {
-    pialBoundary=Sys.getenv("AVECPROF_PIAL_BOUNDARY")
+    pialBoundary=as.numeric(Sys.getenv("AVECPROF_PIAL_BOUNDARY"))
   }
   
   if (is.null(offset)) {
-    offset=Sys.getenv("AAVECPROF_OFFSET")
+    offset=as.numeric(Sys.getenv("AVECPROF_OFFSET"))
   }
   
   if (is.null(flatCurveThreshold)) {
-    flatCurveThreshold=Sys.getenv("AVECPROF_FLAT_CURVE_THRESHOLD")
+    flatCurveThreshold=as.numeric(Sys.getenv("AVECPROF_FLAT_CURVE_THRESHOLD"))
   }
   
   if (is.null(flatThickThreshold)) {
-    flatThickThreshold=Sys.getenv("AVECPROF_FLAT_THICK_THRESHOLD")
+    flatThickThreshold=as.numeric(Sys.getenv("AVECPROF_FLAT_THICK_THRESHOLD"))
   }
   
    
@@ -59,8 +59,8 @@ computeAlignedProfiles<-function(inFileName, outFileName, wmBoundary=NULL, pialB
   load(inFileName)
   cortexRegionData<-list(theResult,thickness,curvature)
   
-  len<-computeHistBoundaries(cortexRegionData[[2]], FLAT_THICK_threshold )
-  curv<-computeHistBoundaries(cortexRegionData[[3]], FLAT_CURV_threshold )
+  len<-computeHistBoundaries(cortexRegionData[[2]], flatThickThreshold )
+  curv<-computeHistBoundaries(cortexRegionData[[3]], flatCurveThreshold )
   selectedProfiles<-selectProfiles(cortexRegionData,curv[[1]],curv[[2]],len[[1]],len[[2]])
   
   croppedSelectedProfiles<-selectedProfiles[,(WM_boundary-offset):(PIAL_boundary+offset)]
