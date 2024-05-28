@@ -179,6 +179,12 @@ int main(int argc, char* argv[])
     transformType::Pointer transform = transformType::New();
     transform->SetIdentity();
     resampler->SetTransform(transform);
+
+
+    using InterpolatorType = itk::NearestNeighborInterpolateImageFunction<ImageType, double>;
+    InterpolatorType::Pointer interpolator = InterpolatorType::New();
+    resampler->SetInterpolator(interpolator);
+
     resampler->SetOutputSpacing(outputSpacing);
     resampler->SetDefaultPixelValue(0); // should never occur
     resampler->SetOutputDirection(in_volReader->GetOutput()->GetDirection());
@@ -187,8 +193,7 @@ int main(int argc, char* argv[])
     
     resampler->SetInput(in_volReader->GetOutput());
     
-    
-    
+
     if ( 0 == nrOfIterations ) { // special case: do not deconvolute, just resample
         try {
             WriterType::Pointer writer = WriterType::New();
